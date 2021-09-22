@@ -1,0 +1,35 @@
+{
+  "name": "@byudaniel/redis-streams",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "npm run build",
+    "start": "tsc && node dist/index.js",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "ioredis": "4.27.9"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.6",
+    "@babel/preset-typescript": "^7.15.0",
+    "@types/jest": "^27.0.2",
+    "@types/node": "^16.9.6",
+    "babel-jest": "^27.2.1",
+    "ioredis": "4.27.9",
+    "jest": "^27.2.1",
+    "ts-node": "^10.2.1",
+    "typescript": "4.4.3"
+  },
+  "dependencies": {
+    "@types/ioredis": "^4.27.4",
+    "nanoid": "^3.1.25",
+    "prettier": "^2.4.1"
+  }
+}
