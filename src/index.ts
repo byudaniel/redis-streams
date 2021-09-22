@@ -2,26 +2,25 @@ import { Redis } from 'ioredis'
 import { nanoid } from 'nanoid'
 
 interface SubscribeOpts {
-  pollInterval: number
+  pollInterval?: number
+  subscribeFromStart: boolean
 }
 
 export class RedisStreams {
   constructor(private redis: Redis) {}
 
-  async publish({
-    streamName,
-    message,
-    maxLength = 10000,
-  }: {
-    streamName: string
-    message: any
-    maxLength?: number
-  }) {
+  async publish(
+    message: any,
+    streamName: string,
+    opts: {
+      maxLength?: number
+    } = {}
+  ): Promise<void> {
     await this.redis.xadd(
       streamName,
       'MAXLEN',
       '~',
-      maxLength,
+      opts.maxLength || 1000000,
       '*',
       'json',
       JSON.stringify(message)
@@ -49,6 +48,23 @@ export class RedisStreams {
     opts?: SubscribeOpts
   ) {
     setTimeout(async () => {
+      try {
+        await this.redis.xgroup(
+          'CREATE',
+          streamName,
+          groupName,
+          opts?.subscribeFromStart ? 0 : '$',
+          'MKSTREAM'
+        )
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          !err.message.toLowerCase().includes('already exists')
+        ) {
+          throw err
+        }
+      }
+
       const consumerGroupName = nanoid()
       const data = await this.redis.xreadgroup(
         'GROUP',
