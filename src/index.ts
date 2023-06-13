@@ -11,8 +11,8 @@ interface SubscribeOpts {
 export class RedisStreams {
   constructor(private redis: Redis) {}
 
-  async publish(
-    message: any,
+  async publish<T>(
+    message: T,
     streamName: string,
     opts: {
       maxLength?: number
@@ -37,16 +37,16 @@ export class RedisStreams {
     await this.redis.xack(streamName, consumerName, messageId)
   }
 
-  subscribe(
+  subscribe<T>(
     streamName: string,
     groupName: string,
     handler: ({
       message,
       ack,
     }: {
-      message: any
+      message: T
       ack: () => Promise<void>
-    }) => any,
+    }) => void,
     opts?: SubscribeOpts
   ) {
     setTimeout(async () => {
@@ -70,10 +70,10 @@ export class RedisStreams {
       }
 
       const consumerName = opts?.consumerName || nanoid()
-      const data = await this.redis.xreadgroup(
+      const data = (await this.redis.xreadgroup(
         'GROUP',
         groupName,
-        consumerName,
+        consumerName, // @ts-ignore - appears to be error in types, will have to investigate
         'BLOCK',
         opts?.pollInterval || 60000,
         'COUNT',
@@ -81,7 +81,7 @@ export class RedisStreams {
         'STREAMS',
         streamName,
         '>'
-      )
+      )) as any[] // TODO: Better typing
 
       if (data) {
         for (const streams of data) {
@@ -89,7 +89,7 @@ export class RedisStreams {
             handler({
               message: JSON.parse(inner[1][1]),
               ack: () => {
-                return this.ackMessage(streamName, consumerName, inner[0])
+                return this.ackMessage(streamName, groupName, inner[0])
               },
             })
           }
